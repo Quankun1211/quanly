@@ -214,6 +214,7 @@
             maxDate: today, // Giới hạn ngày tối đa là ngày hiện tại
             onChange: function(selectedDates, dateStr, instance) {
                 const selectedDate = new Date(dateStr);
+                selectedDate.setHours(0, 0, 0, 0); // Chuẩn hóa giờ
                 if (selectedDate > today) {
                     instance.setDate(today, true); // Đặt lại thành ngày hiện tại
                     alert("Không thể chọn ngày trong tương lai! Đã đặt lại thành ngày hiện tại.");
@@ -248,6 +249,7 @@
             if (date && productType && quantity) {
                 // Kiểm tra ngày
                 const selectedDate = new Date(date);
+                selectedDate.setHours(0, 0, 0, 0); // Chuẩn hóa giờ để so sánh
                 if (selectedDate > today) {
                     date = today.toISOString().split('T')[0]; // Chuyển ngày hiện tại thành định dạng YYYY-MM-DD
                     document.getElementById('dateInput')._flatpickr.setDate(today, true);
