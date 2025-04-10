@@ -244,7 +244,7 @@
         function addRecord() {
             let date = document.getElementById('dateInput').value;
             const productType = document.getElementById('productType').value;
-            const quantity = document.getElementById('quantity').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
 
             if (date && productType && quantity) {
                 // Kiểm tra ngày
@@ -259,11 +259,19 @@
                 if (!records[date]) {
                     records[date] = [];
                 }
-                
-                records[date].push({
-                    productType: productType,
-                    quantity: parseInt(quantity)
-                });
+
+                // Kiểm tra xem sản phẩm đã tồn tại trong ngày đó chưa
+                const existingProduct = records[date].find(product => product.productType === productType);
+                if (existingProduct) {
+                    // Nếu sản phẩm đã tồn tại, cộng thêm số lượng
+                    existingProduct.quantity += quantity;
+                } else {
+                    // Nếu sản phẩm chưa tồn tại, thêm mới
+                    records[date].push({
+                        productType: productType,
+                        quantity: quantity
+                    });
+                }
                 
                 // Lưu vào localStorage
                 localStorage.setItem('productRecords', JSON.stringify(records));
