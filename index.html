@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản lý sản phẩm</title>
+    <!-- Thêm Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            padding: 0;
+        }
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+        .input-form {
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .input-form input {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            flex: 1;
+            min-width: 0;
+        }
+        .input-form button {
+            padding: 8px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .input-form button:hover {
+            background-color: #45a049;
+        }
+        .sort-section, .search-section {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .sort-section select, .search-section input, .search-section button {
+            padding: 8px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .search-section button {
+            background-color: #008CBA;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .search-section button:hover {
+            background-color: #007bb5;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+            position: sticky;
+            top: 0;
+        }
+        .product-list {
+            margin: 0;
+            padding-left: 15px;
+        }
+        .product-item {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+        .product-item button {
+            padding: 4px 8px;
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .product-item button:hover {
+            background-color: #cc0000;
+        }
+        .no-results {
+            text-align: center;
+            color: #888;
+            padding: 10px;
+        }
+
+        /* Responsive cho mobile */
+        @media (max-width: 600px) {
+            .input-form, .sort-section, .search-section {
+                flex-direction: column;
+            }
+            .input-form input,
+            .input-form button,
+            .sort-section select,
+            .search-section input,
+            .search-section button {
+                width: 100%;
+            }
+            table {
+                font-size: 12px;
+            }
+            th, td {
+                padding: 6px;
+            }
+            .product-item {
+                flex-wrap: wrap;
+            }
+            .product-item button {
+                padding: 3px 6px;
+                font-size: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Quản lý sản phẩm</h2>
+        
+        <div class="input-form">
+            <input type="text" id="dateInput" placeholder="Chọn ngày">
+            <input type="text" id="productType" placeholder="Loại sản phẩm">
+            <input type="number" id="quantity" placeholder="Số lượng">
+            <button onclick="addRecord()">Thêm</button>
+        </div>
+
+        <div class="sort-section">
+            <label for="sortOrder">Sắp xếp theo tổng sản phẩm:</label>
+            <select id="sortOrder" onchange="updateTable()">
+                <option value="asc">Tăng dần</option>
+                <option value="desc">Giảm dần</option>
+                <option value="dateAsc">Ngày tăng dần</option>
+                <option value="dateDesc">Ngày giảm dần</option>
+            </select>
+        </div>
+
+        <div class="search-section">
+            <label for="searchDate">Tìm kiếm theo ngày:</label>
+            <input type="text" id="searchDate" placeholder="Chọn ngày để tìm">
+            <button onclick="searchByDate()">Tìm</button>
+            <button onclick="clearSearch()">Xóa tìm kiếm</button>
+        </div>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th>Ngày & Sản phẩm (Tổng số lượng)</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <!-- Thêm Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Thêm ngôn ngữ tiếng Việt cho Flatpickr -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+    <script>
+        // Lấy ngày hiện tại
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Đặt giờ về 00:00:00 để so sánh chính xác
+
+        // Khởi tạo Flatpickr cho ô nhập liệu
+        flatpickr("#dateInput", {
+            dateFormat: "Y-m-d", // Định dạng ngày để lưu trữ
+            locale: "vn", // Ngôn ngữ tiếng Việt
+            allowInput: true, // Cho phép nhập tay
+            altInput: true, // Hiển thị định dạng khác cho người dùng
+            altFormat: "d/m/Y", // Định dạng hiển thị cho người dùng
+            maxDate: today, // Giới hạn ngày tối đa là ngày hiện tại
+            onChange: function(selectedDates, dateStr, instance) {
+                const selectedDate = new Date(dateStr);
+                if (selectedDate > today) {
+                    instance.setDate(today, true); // Đặt lại thành ngày hiện tại
+                    alert("Không thể chọn ngày trong tương lai! Đã đặt lại thành ngày hiện tại.");
+                }
+            }
+        });
+
+        // Khởi tạo Flatpickr cho ô tìm kiếm
+        flatpickr("#searchDate", {
+            dateFormat: "Y-m-d", // Định dạng ngày để lưu trữ
+            locale: "vn", // Ngôn ngữ tiếng Việt
+            allowInput: true, // Cho phép nhập tay
+            altInput: true, // Hiển thị định dạng khác cho người dùng
+            altFormat: "d/m/Y", // Định dạng hiển thị cho người dùng
+            maxDate: today // Giới hạn ngày tối đa là ngày hiện tại
+        });
+
+        // Khởi tạo records từ localStorage hoặc object rỗng
+        let records = JSON.parse(localStorage.getItem('productRecords')) || {};
+        let searchDate = null; // Biến để lưu ngày tìm kiếm
+
+        // Cập nhật bảng khi trang được tải
+        window.onload = function() {
+            updateTable();
+        };
+
+        function addRecord() {
+            let date = document.getElementById('dateInput').value;
+            const productType = document.getElementById('productType').value;
+            const quantity = document.getElementById('quantity').value;
+
+            if (date && productType && quantity) {
+                // Kiểm tra ngày
+                const selectedDate = new Date(date);
+                if (selectedDate > today) {
+                    date = today.toISOString().split('T')[0]; // Chuyển ngày hiện tại thành định dạng YYYY-MM-DD
+                    document.getElementById('dateInput')._flatpickr.setDate(today, true);
+                    alert("Ngày đã được đặt lại thành ngày hiện tại vì bạn chọn ngày trong tương lai!");
+                }
+
+                if (!records[date]) {
+                    records[date] = [];
+                }
+                
+                records[date].push({
+                    productType: productType,
+                    quantity: parseInt(quantity)
+                });
+                
+                // Lưu vào localStorage
+                localStorage.setItem('productRecords', JSON.stringify(records));
+                
+                updateTable();
+                clearInputs();
+            } else {
+                alert('Vui lòng điền đầy đủ thông tin!');
+            }
+        }
+
+        function calculateTotalQuantity(products) {
+            return products.reduce((total, product) => total + product.quantity, 0);
+        }
+
+        function searchByDate() {
+            const searchInput = document.getElementById('searchDate').value;
+            if (searchInput) {
+                searchDate = searchInput;
+            } else {
+                searchDate = null;
+                alert('Vui lòng chọn ngày để tìm kiếm!');
+            }
+            updateTable();
+        }
+
+        function clearSearch() {
+            searchDate = null;
+            document.getElementById('searchDate')._flatpickr.clear();
+            updateTable();
+        }
+
+        function updateTable() {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            const sortOrder = document.getElementById('sortOrder').value;
+
+            // Lọc ngày nếu có tìm kiếm
+            let dates = Object.keys(records);
+            if (searchDate) {
+                dates = dates.filter(date => date === searchDate);
+                if (dates.length === 0) {
+                    tableBody.innerHTML = '<tr><td class="no-results">Không tìm thấy dữ liệu cho ngày này!</td></tr>';
+                    return;
+                }
+            }
+
+            // Sắp xếp các ngày
+            if (sortOrder === 'asc') {
+                // Sắp xếp theo tổng số lượng tăng dần
+                dates.sort((a, b) => {
+                    const totalA = calculateTotalQuantity(records[a]);
+                    const totalB = calculateTotalQuantity(records[b]);
+                    return totalA - totalB;
+                });
+            } else if (sortOrder === 'desc') {
+                // Sắp xếp theo tổng số lượng giảm dần
+                dates.sort((a, b) => {
+                    const totalA = calculateTotalQuantity(records[a]);
+                    const totalB = calculateTotalQuantity(records[b]);
+                    return totalB - totalA;
+                });
+            } else if (sortOrder === 'dateAsc') {
+                // Sắp xếp theo ngày tăng dần
+                dates.sort();
+            } else if (sortOrder === 'dateDesc') {
+                // Sắp xếp theo ngày giảm dần
+                dates.sort().reverse();
+            }
+
+            dates.forEach(date => {
+                const row = document.createElement('tr');
+                let productListHTML = '<ul class="product-list">';
+                
+                records[date].forEach((product, index) => {
+                    productListHTML += `
+                        <li class="product-item">
+                            ${product.productType}: ${product.quantity}
+                            <button onclick="deleteRecord('${date}', ${index})">Xóa</button>
+                        </li>
+                    `;
+                });
+                productListHTML += '</ul>';
+
+                const totalQuantity = calculateTotalQuantity(records[date]);
+                row.innerHTML = `
+                    <td>${formatDate(date)} (Tổng: ${totalQuantity})<br>${productListHTML}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function deleteRecord(date, index) {
+            records[date].splice(index, 1);
+            if (records[date].length === 0) {
+                delete records[date];
+            }
+            // Cập nhật localStorage sau khi xóa
+            localStorage.setItem('productRecords', JSON.stringify(records));
+            updateTable();
+        }
+
+        function clearInputs() {
+            document.getElementById('productType').value = '';
+            document.getElementById('quantity').value = '';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('vi-VN', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+    </script>
+</body>
+</html>
