@@ -3,7 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="description" content="Ứng dụng quản lý sản phẩm theo ngày">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Quản lý sản phẩm</title>
+    <!-- Liên kết đến manifest.json -->
+    <link rel="manifest" href="/manifest.json">
     <!-- Thêm Flatpickr CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
@@ -181,6 +187,19 @@
     <!-- Thêm ngôn ngữ tiếng Việt cho Flatpickr -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
     <script>
+        // Đăng ký Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('Service Worker registration failed:', error);
+                    });
+            });
+        }
+
         // Lấy ngày hiện tại
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Đặt giờ về 00:00:00 để so sánh chính xác

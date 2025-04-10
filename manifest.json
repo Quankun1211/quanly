@@ -1,0 +1,9 @@
+{
+    "name": "Quản lý sản phẩm",
+    "short_name": "QLSP",
+    "description": "Ứng dụng quản lý sản phẩm theo ngày",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#4CAF50"
+}
